@@ -32,3 +32,12 @@ There are two versions of Webhook.site:
 * This documentation site uses [Just the Docs](https://github.com/pmarsceill/just-the-docs), a documentation theme for Jekyll.
 
 **[Full Documentation at docs.webhook.site](https://docs.webhook.site)**
+
+
+## Prerequisites
+Install php and composer
+```
+brew install php
+brew install composer
+```
+

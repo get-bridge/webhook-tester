@@ -1,0 +1,42 @@
+name: Publish Docker Image To ECR
+
+on:
+  push:
+    branches:
+      - master
+  workflow_dispatch:
+
+env:
+  ECR_AWS_DEFAULT_REGION: us-east-2
+  ECR_REGISTRY: 127178877223.dkr.ecr.us-east-2.amazonaws.com
+
+jobs:
+  push-docker-image-to-ecr:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v5
+
+      - name: Login to ECR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.ECR_REGISTRY }}
+          username: ${{ secrets.TRUSS_AWS_ACCESS_KEY_ID }}
+          password: ${{ secrets.TRUSS_AWS_SECRET_ACCESS_KEY }}
+        env:
+          AWS_REGION: ${{ env.ECR_AWS_DEFAULT_REGION }}
+
+      - uses: docker/build-push-action@v6
+        env:
+          WEBHOOK_TESTER_IMAGE: ${{ env.ECR_REGISTRY }}/webhook-tester
+        with:
+          file: Dockerfile
+          build-args: |
+            GIT_HUB_PACKAGES_ACTOR=${{ secrets.GIT_HUB_PACKAGES_ACTOR }}
+            GIT_HUB_PACKAGES_TOKEN=${{ secrets.GIT_HUB_PACKAGES_TOKEN }}
+          tags: |
+            ${{ env.WEBHOOK_TESTER_IMAGE }}:${{ github.sha }}
+            ${{ env.WEBHOOK_TESTER_IMAGE }}:latest
+          push: true

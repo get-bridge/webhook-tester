@@ -35,8 +35,6 @@ class TokenStore implements \App\Storage\TokenStore
             throw new GoneHttpException('Token not found');
         }
 
-        $this->redis->expire(Token::getIdentifier($tokenId), config('app.expiry'));
-
         return new Token(json_decode($result, true));
     }
 
@@ -55,7 +53,7 @@ class TokenStore implements \App\Storage\TokenStore
      */
     public function store(Token $token)
     {
-        $this->redis->setex(Token::getIdentifier($token->uuid), config('app.expiry'), json_encode($token->attributes()));
+        $this->redis->set(Token::getIdentifier($token->uuid), json_encode($token->attributes()));
 
         return $token;
     }
