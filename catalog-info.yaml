@@ -17,6 +17,7 @@ metadata:
     github.com/project-slug: get-bridge/webhook-tester
     backstage.io/source-location: url:https://github.com/get-bridge/webhook-tester
     backstage.io/techdocs-ref: dir:.
+    opsgenie.com/component-selector: tag:"webhook-tester"
 spec:
   type: service
   lifecycle: production
