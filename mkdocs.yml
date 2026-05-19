@@ -1,4 +1,4 @@
-site_name: 'TDB'
+site_name: 'Webhook Tester'
 
 plugins:
   - techdocs-core
