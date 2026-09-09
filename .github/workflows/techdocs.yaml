@@ -16,6 +16,9 @@ jobs:
   publish-techdocs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    permissions:
+      contents: read
+      id-token: write
     steps:
       - uses: actions/checkout@v6
         with:
@@ -23,10 +26,14 @@ jobs:
           token: ${{ secrets.GIT_HUB_TOKEN }}
           path: .github/developer_portal
           ref: master
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::127178877223:role/github/github-truss
+          aws-region: us-east-2
+
       - uses: ./.github/developer_portal/.github/actions/techdocs
         with:
-          aws_access_key_id: ${{ secrets.TRUSS_AWS_ACCESS_KEY_ID }}
-          aws_secret_access_key: ${{ secrets.TRUSS_AWS_SECRET_ACCESS_KEY }}
           aws_region: us-east-2
           entity_name: 'webhook-tester'
           entity_kind: 'component'
