@@ -36,7 +36,7 @@ class BlockIp extends Job implements ShouldQueue
             return;
         }
 
-        $process = new Process($command);
+        $process = Process::fromShellCommandline($command);
         $process->run();
 
         $log->info('Blocking ip', [

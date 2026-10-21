@@ -1,55 +1,80 @@
 <?php
 
-/*
-|--------------------------------------------------------------------------
-| Create The Application
-|--------------------------------------------------------------------------
-|
-| The first thing we will do is create a new Laravel application instance
-| which serves as the "glue" for all the components of Laravel, and is
-| the IoC container for the system binding all of the various parts.
-|
-*/
+use App\Http\Middleware\ThrottleRequests;
+use Illuminate\Foundation\Application;
+use Illuminate\Foundation\Configuration\Exceptions;
+use Illuminate\Foundation\Configuration\Middleware;
+use Illuminate\Foundation\Http\Middleware\PreventRequestsDuringMaintenance;
+use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
+use Sentry\Laravel\Integration;
+use Sentry\SentrySdk;
+use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 
-$app = new Illuminate\Foundation\Application(
-    realpath(__DIR__.'/../')
-);
+return Application::configure(basePath: dirname(__DIR__))
+    ->withRouting(
+        // Routes are registered without the "web" group: webhooks are posted by
+        // third parties, so sessions and CSRF verification must not apply.
+        using: function () {
+            require __DIR__.'/../routes/web.php';
+        },
+    )
+    ->withMiddleware(function (Middleware $middleware): void {
+        // Captured webhook payloads must be stored exactly as received, so the
+        // default TrimStrings/ConvertEmptyStringsToNull stack is not used.
+        $middleware->use([
+            PreventRequestsDuringMaintenance::class,
+        ]);
 
-/*
-|--------------------------------------------------------------------------
-| Bind Important Interfaces
-|--------------------------------------------------------------------------
-|
-| Next, we need to bind some important interfaces into the container so
-| we will be able to resolve them when needed. The kernels serve the
-| incoming requests to this application from both the web and CLI.
-|
-*/
+        $middleware->alias([
+            'throttle' => ThrottleRequests::class,
+        ]);
+    })
+    ->withExceptions(function (Exceptions $exceptions): void {
+        Integration::handles($exceptions);
 
-$app->singleton(
-    Illuminate\Contracts\Http\Kernel::class,
-    App\Http\Kernel::class
-);
+        $exceptions->render(function (Throwable $e, Request $request) {
+            if (!($request->ajax() || $request->wantsJson() || $request->isJson())) {
+                return null;
+            }
 
-$app->singleton(
-    Illuminate\Contracts\Console\Kernel::class,
-    App\Console\Kernel::class
-);
+            // The front end reads validation errors as a flat {field: [messages]} object.
+            if ($e instanceof ValidationException) {
+                return response()->json($e->errors(), $e->status);
+            }
 
-$app->singleton(
-    Illuminate\Contracts\Debug\ExceptionHandler::class,
-    App\Exceptions\Handler::class
-);
+            $message = 'An internal error occurred';
 
-/*
-|--------------------------------------------------------------------------
-| Return The Application
-|--------------------------------------------------------------------------
-|
-| This script returns the application instance. The instance is given to
-| the calling script so we can separate the building of the instances
-| from the actual running of the application and sending responses.
-|
-*/
+            if ($e instanceof HttpException) {
+                $message = $e->getMessage();
+            }
 
-return $app;
+            $eventId = SentrySdk::getCurrentHub()->getLastEventId();
+
+            $response = [
+                'success' => false,
+                'error' => [
+                    'message' => $message,
+                    'id' => $eventId ? (string)$eventId : null,
+                ],
+            ];
+
+            if ($e->getCode()) {
+                $response['error']['code'] = $e->getCode();
+            }
+
+            if (config('app.debug')) {
+                $response['error']['exception'] = sprintf('[%s] %s', get_class($e), $e->getMessage());
+                $response['error']['trace'] = $e->getTrace();
+                $response['error']['file'] = $e->getFile();
+                $response['error']['line'] = $e->getLine();
+            }
+
+            if ($e instanceof HttpException) {
+                return response()->json($response, $e->getStatusCode());
+            }
+
+            return response()->json($response, Response::HTTP_INTERNAL_SERVER_ERROR);
+        });
+    })->create();

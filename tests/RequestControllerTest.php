@@ -1,5 +1,7 @@
 <?php
 
+namespace Tests;
+
 class RequestControllerTest extends TestCase
 {
     public function testPagination()

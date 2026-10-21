@@ -33,7 +33,7 @@ class UnblockIp extends Job implements ShouldQueue
             return;
         }
 
-        $process = new Process(sprintf('sudo ufw delete deny from %s', $this->ip));
+        $process = Process::fromShellCommandline(sprintf('sudo ufw delete deny from %s', $this->ip));
         $process->run();
 
         $log->info('Unblocking ip', [

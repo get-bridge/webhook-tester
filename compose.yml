@@ -6,7 +6,7 @@ services:
     build:
       dockerfile: Dockerfile
       context: ./
-    command: php artisan queue:work --daemon --tries=3 --timeout=10
+    command: php artisan queue:work --tries=3 --timeout=10
     ports:
       - "8084:80"
     environment:
