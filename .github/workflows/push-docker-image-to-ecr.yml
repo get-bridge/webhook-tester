@@ -2,8 +2,6 @@ name: Publish Docker Image To ECR
 
 on:
   push:
-    branches:
-      - master
   workflow_dispatch:
 
 env:
@@ -41,5 +39,4 @@ jobs:
             GIT_HUB_PACKAGES_TOKEN=${{ secrets.GIT_HUB_PACKAGES_TOKEN }}
           tags: |
             ${{ env.WEBHOOK_TESTER_IMAGE }}:${{ github.sha }}
-            ${{ env.WEBHOOK_TESTER_IMAGE }}:latest
           push: true
