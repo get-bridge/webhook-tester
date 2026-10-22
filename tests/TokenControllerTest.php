@@ -1,5 +1,7 @@
 <?php
 
+namespace Tests;
+
 use Illuminate\Http\Response;
 
 class TokenControllerTest extends TestCase

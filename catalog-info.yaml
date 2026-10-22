@@ -13,7 +13,7 @@ metadata:
   annotations:
     bridge.io/language: php
     bridge.io/tier: backend
-    bridge.io/php-version: '7.1.0'
+    bridge.io/php-version: '8.4'
     github.com/project-slug: get-bridge/webhook-tester
     backstage.io/source-location: url:https://github.com/get-bridge/webhook-tester
     backstage.io/techdocs-ref: dir:.

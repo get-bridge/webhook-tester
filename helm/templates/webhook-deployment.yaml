@@ -20,7 +20,6 @@ spec:
             - php
             - artisan
             - queue:work
-            - --daemon
             - --tries=3
             - --timeout=10
           env:

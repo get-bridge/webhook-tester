@@ -7,3 +7,5 @@ Homestead.json
 .idea/
 laravel-echo-server.json
 laravel-echo-server.lock
+/.phpunit.cache
+.phpunit.result.cache

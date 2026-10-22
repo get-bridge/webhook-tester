@@ -3,34 +3,21 @@
 namespace App\Http\Middleware;
 
 use App\Events\IpThrottled;
-use Closure;
 use Illuminate\Routing\Middleware\ThrottleRequests as LaravelThrottleRequests;
 
 class ThrottleRequests extends LaravelThrottleRequests
 {
     /**
      * @param \Illuminate\Http\Request $request
-     * @param Closure $next
+     * @param string $key
      * @param int $maxAttempts
-     * @param int $decayMinutes
-     * @return mixed|\Symfony\Component\HttpFoundation\Response
+     * @param callable|null $responseCallback
+     * @return \Illuminate\Http\Exceptions\ThrottleRequestsException|\Illuminate\Http\Exceptions\HttpResponseException
      */
-    public function handle($request, Closure $next, $maxAttempts = 60, $decayMinutes = 1)
+    protected function buildException($request, $key, $maxAttempts, $responseCallback = null)
     {
-        $key = $this->resolveRequestSignature($request);
+        broadcast(new IpThrottled($request->ip()));
 
-        if ($this->limiter->tooManyAttempts($key, $maxAttempts, $decayMinutes)) {
-            broadcast(new IpThrottled($request->ip()));
-            return $this->buildResponse($key, $maxAttempts);
-        }
-
-        $this->limiter->hit($key, $decayMinutes);
-
-        $response = $next($request);
-
-        return $this->addHeaders(
-            $response, $maxAttempts,
-            $this->calculateRemainingAttempts($key, $maxAttempts)
-        );
+        return parent::buildException($request, $key, $maxAttempts, $responseCallback);
     }
 }
