@@ -17,11 +17,11 @@ RUN npm run gulp
 # Stage 2: Composer, nginx and fpm
 ##############################################
 
-FROM php:8.4-fpm-trixie
+FROM php:8.4.27-fpm-trixie
 WORKDIR /var/www/html
 
 # 8.4.27 carries the fixes for CVE-2026-109618 and CVE-2026-109619; fail the build on anything older.
-RUN php -r 'if (version_compare(PHP_VERSION, "8.4.27", "<")) { fwrite(STDERR, "PHP ".PHP_VERSION." is older than 8.4.27 and lacks the CVE-2026-109618/109619 fixes; rebuild with --pull once the base image is updated.\n"); exit(1); }' \
+RUN php -r 'if (version_compare(PHP_VERSION, "8.4.27", "<")) { fwrite(STDERR, "PHP ".PHP_VERSION." is older than 8.4.27 and lacks the CVE-2026-109618/109619 fixes; use a base image of 8.4.27 or newer.\n"); exit(1); }' \
     && apt-get update \
     && apt-get install -y --no-install-recommends nginx unzip \
     && rm -rf /var/lib/apt/lists/* \
